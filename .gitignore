@@ -317,3 +317,5 @@ sandbox
 
 #IL linker for testing
 linker
+/bb.cmd
+/bc.cmd

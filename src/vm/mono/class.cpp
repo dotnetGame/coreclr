@@ -1,8 +1,8 @@
 #include "common.h"
 #include "mono.h"
+#include <algorithm>
 
 int mono_class_get_userdata_offset ()
 {
-    assert(!"mono_class_get_userdata_offset");
-    throw;
+    return offsetof(EEClass, m_userData);
 }

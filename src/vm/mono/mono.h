@@ -40,7 +40,7 @@ struct MonoAssembly;
 struct MonoObject;
 struct MonoClassField;
 struct MonoClass;
-struct MonoDomain;
+typedef AppDomain MonoDomain;
 struct MonoImage;
 struct MonoType;
 struct MonoMethodSignature;
@@ -187,5 +187,9 @@ typedef enum {
     MONO_DEBUG_FORMAT_MONO,
     MONO_DEBUG_FORMAT_DEBUGGER
 } MonoDebugFormat;
+
+#include <fstream>
+extern std::ofstream logger;
+extern std::wofstream wlogger;
 
 #endif

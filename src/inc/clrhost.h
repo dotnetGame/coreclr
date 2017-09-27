@@ -565,6 +565,8 @@ HMODULE GetCLRModule ();
 #include <stdlib.h>
 #include <malloc.h>
 
+// used by stl
+/*
 #ifdef malloc
 #undef malloc
 #endif
@@ -584,6 +586,7 @@ HMODULE GetCLRModule ();
 #endif
 #define free(memblock) \
         Dont_Use_free(memblock)
+*/
 
 #endif //!FEATURE_NO_HOST
 
