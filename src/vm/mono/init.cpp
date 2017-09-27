@@ -493,3 +493,76 @@ MonoDomain* mono_jit_init_version(const char *domain_name, const char *runtime_v
 #endif
     return AppDomain::GetCurrentDomain();
 }
+
+void mono_unity_domain_set_config(MonoDomain *domain, const char *base_dir, const char *config_file_name)
+{
+    // Do nothing
+}
+
+SString s_embeddingHostName;
+
+void mono_unity_set_embeddinghostname(const char* name)
+{
+    s_embeddingHostName.SetANSI(name);
+#if _DEBUG
+    wlogger << L"Embedding HostName:" << s_embeddingHostName.GetUnicode() << std::endl;
+#endif
+}
+
+void mono_runtime_unhandled_exception_policy_set(MonoRuntimeUnhandledExceptionPolicy policy)
+{
+    // Do nothing
+}
+
+MonoImage * mono_image_open_from_data_with_name(char *data, guint32 data_len, gboolean need_copy, MonoImageOpenStatus *status, gboolean refonly, const char *name)
+{
+    PEImageHolder image(PEImage::LoadFlat(data, data_len));
+    if (image)
+        image->LoadNoFile();
+#if _DEBUG
+    logger << "open image:" << name << std::endl;
+#endif
+    ReleaseHolder<ICLRPrivAssembly> pAssembly;
+    DWORD dwMessageID = IDS_EE_FILELOAD_ERROR_GENERIC;
+
+    // Set the caller's assembly to be mscorlib
+    DomainAssembly *pCallersAssembly = nullptr;
+    PEAssembly *pParentAssembly = nullptr;
+    ICLRPrivBinder* pBinderContext = nullptr;
+
+    // Initialize the AssemblySpec
+    AssemblySpec spec;
+    spec.InitializeSpec(TokenFromRid(1, mdtAssembly), image->GetMDImport(), pCallersAssembly);
+    spec.SetBindingContext(pBinderContext);
+
+    HRESULT hr = S_OK;
+    PTR_AppDomain pCurDomain = GetAppDomain();
+    CLRPrivBinderCoreCLR *pTPABinder = pCurDomain->GetTPABinderContext();
+    // Bind the assembly using TPA binder
+    hr = pTPABinder->BindUsingPEImage(image, false, &pAssembly);
+
+    if (hr != S_OK)
+    {
+        // Give a more specific message for the case when we found the assembly with the same name already loaded.
+        if (hr == COR_E_FILELOAD)
+        {
+            dwMessageID = IDS_HOST_ASSEMBLY_RESOLVER_ASSEMBLY_ALREADY_LOADED_IN_CONTEXT;
+        }
+
+        StackSString name;
+        spec.GetFileOrDisplayName(0, name);
+        COMPlusThrowHR(COR_E_FILELOAD, dwMessageID, name);
+    }
+
+    BINDER_SPACE::Assembly* assem;
+    assem = BINDER_SPACE::GetAssemblyFromPrivAssemblyFast(pAssembly);
+
+    auto file = PEAssembly::Open(pParentAssembly, assem->GetPEImage(), assem->GetNativePEImage(), pAssembly, FALSE);
+
+    return file;
+}
+
+void mono_image_close(MonoImage *image)
+{
+    image->Release();
+}
