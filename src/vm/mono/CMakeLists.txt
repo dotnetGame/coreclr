@@ -9,6 +9,8 @@ set(VM_SOURCES_MONO
     internalcall.cpp
     security.cpp
     assembly.cpp
+    gc.cpp
+    string.cpp
 )
 
 convert_to_absolute_path(VM_SOURCES_MONO ${VM_SOURCES_MONO})

@@ -37,13 +37,13 @@ typedef gboolean(*MonoCoreClrPlatformCB) (const char *image_name);
 
 struct MonoException;
 typedef Assembly MonoAssembly;
-struct MonoObject;
+typedef Object MonoObject;
 struct MonoClassField;
-typedef EEClass MonoClass;
+typedef MethodTable MonoClass;
 typedef AppDomain MonoDomain;
 typedef PEAssembly MonoImage;
 struct MonoType;
-struct MonoMethodSignature;
+typedef MethodDesc MonoMethodSignature;
 struct MonoArray;
 typedef Thread MonoThread;
 struct MonoVTable;
@@ -63,18 +63,9 @@ typedef int gint32;
 typedef long gint64;
 typedef unsigned char   guchar;
 typedef UInt16 gunichar2;
-struct MonoString
-{
-    gint32 monoObjectPart1;
-    gint32 monoObjectPart2;
-    gint32 length;
-    gunichar2 firstCharacter;
-};
+typedef StringObject MonoString;
 
-struct MonoMethod {
-    UInt16 flags;
-    UInt16 iflags;
-};
+typedef MethodDesc MonoMethod;
 
 typedef enum
 {

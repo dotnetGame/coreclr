@@ -566,3 +566,10 @@ void mono_image_close(MonoImage *image)
 {
     image->Release();
 }
+
+MonoImage* mono_get_corlib(void)
+{
+    AssemblySpec spec;
+    spec.SetName("mscorlib");
+    return spec.LoadDomainAssembly(FILE_LOADED)->GetFile();
+}
