@@ -42,7 +42,7 @@ struct MonoClassField;
 typedef MethodTable MonoClass;
 typedef AppDomain MonoDomain;
 typedef PEAssembly MonoImage;
-struct MonoType;
+typedef void MonoType;
 typedef MethodDesc MonoMethodSignature;
 typedef Object MonoArray;
 typedef Thread MonoThread;

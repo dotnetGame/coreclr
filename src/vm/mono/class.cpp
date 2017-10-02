@@ -208,7 +208,7 @@ MonoClass* mono_class_get_nesting_type(MonoClass *klass)
     if (!klass->GetClass()->IsNested()) return nullptr;
     auto typeDef = klass->GetCl();
     mdTypeDef enclosingTypeDef;
-    if (FAILED(klass->GetModule()->GetMDImport()->GetNestedClassProps(typeDef, &enclosingTypeDef)))
+    if (FAILED(klass->GetMDImport()->GetNestedClassProps(typeDef, &enclosingTypeDef)))
     {
         _ASSERT(!"Cannot find enclosing typedef.");
         return nullptr;
@@ -231,6 +231,61 @@ MonoClass* mono_class_get_nesting_type(MonoClass *klass)
 
 const char* mono_class_get_namespace (MonoClass *klass)
 {
-    assert(!"mono_class_get_namespace");
-    throw;
+    LPCSTR namespaceName;
+    if (FAILED(klass->GetMDImport()->GetNameOfTypeDef(klass->GetCl(), nullptr, &namespaceName)))
+    {
+        _ASSERT(!"Cannot get namespace.");
+        return nullptr;
+    }
+    return namespaceName;
+}
+
+const char* mono_class_get_name(MonoClass *klass)
+{
+    LPCSTR className;
+    if (FAILED(klass->GetMDImport()->GetNameOfTypeDef(klass->GetCl(), &className, nullptr)))
+    {
+        _ASSERT(!"Cannot get class name.");
+        return nullptr;
+    }
+    return className;
+}
+
+gboolean mono_unity_class_is_interface(MonoClass* klass)
+{
+    return klass->IsInterface();
+}
+
+gboolean mono_unity_class_is_abstract(MonoClass* klass)
+{
+    return klass->IsAbstract();
+}
+
+gboolean mono_class_is_generic(MonoClass *klass)
+{
+    return klass->IsGenericTypeDefinition();
+}
+
+gboolean mono_class_is_inflated(MonoClass *klass)
+{
+    return klass->HasInstantiation();
+}
+
+MonoClass* mono_class_get_parent(MonoClass *klass)
+{
+    return klass->GetParentMethodTable();
+}
+
+guint32 mono_signature_get_param_count(MonoMethodSignature *sig)
+{
+    MetaSig metaSig(sig);
+    return metaSig.NumFixedArgs();
+}
+
+MonoType* mono_signature_get_return_type(MonoMethodSignature *sig)
+{
+    MetaSig metaSig(sig);
+    TypeHandle typeHandle;
+    metaSig.GetReturnTypeNormalized(&typeHandle);
+    return typeHandle.AsPtr();
 }

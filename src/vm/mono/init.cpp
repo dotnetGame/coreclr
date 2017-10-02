@@ -573,3 +573,8 @@ MonoImage* mono_get_corlib(void)
     spec.SetName("mscorlib");
     return spec.LoadDomainAssembly(FILE_LOADED)->GetFile();
 }
+
+const char* mono_image_get_name(MonoImage *image)
+{
+    return image->GetSimpleName();
+}
