@@ -11,6 +11,7 @@ set(VM_SOURCES_MONO
     assembly.cpp
     gc.cpp
     string.cpp
+    unity_liveness.cpp
     attr.cpp
 )
 
