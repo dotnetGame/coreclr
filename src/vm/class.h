@@ -1991,7 +1991,6 @@ public:
     // Put it first so the offset rarely changes, which just reduces the number of times we have to fiddle
     // with the offset.
     RelativePointer<PTR_GuidInfo> m_pGuidInfo;  // The cached guid information for interfaces.
-    void* m_userData;
 
 #ifdef _DEBUG
 public:

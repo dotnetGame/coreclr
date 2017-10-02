@@ -5,18 +5,36 @@
 
 int mono_class_get_userdata_offset()
 {
-    return offsetof(EEClass, m_userData);
+    return offsetof(MonoClass, m_userData);
 }
 
 MonoClass * mono_class_from_name(MonoImage *image, const char* name_space, const char *name)
 {
-    auto assembly = GetAppDomain()->FindAssembly(image);
-    if (!assembly) return nullptr;
+    MonoClass* klass = nullptr;
+    EX_TRY
+    {
+        auto assembly = GetAppDomain()->FindAssembly(image);
+        if (assembly)
+        {
 #if _DEBUG
-    logger << "Load class:" << name_space << "::" << name << std::endl;
+            logger << "Load class:" << name_space << "::" << name << std::endl;
 #endif
 
-    return ClassLoader::LoadTypeByNameThrowing(assembly->GetAssembly(), name_space, name).GetMethodTable();
+            klass = ClassLoader::LoadTypeByNameThrowing(assembly->GetAssembly(), name_space, name).GetMethodTable();
+        }
+    }
+    EX_CATCH
+    {
+        SString ex;
+        GET_EXCEPTION()->GetMessage(ex);
+        SString ex2;
+        ex.ConvertToUTF8(ex2);
+#if _DEBUG
+        logger << "Load failed: " << ex2.GetUTF8NoConvert() << std::endl;
+#endif
+    }
+    EX_END_CATCH(SwallowAllExceptions);
+    return klass;
 }
 
 MonoMethod* mono_class_get_methods(MonoClass* klass, gpointer *iter)
@@ -153,6 +171,66 @@ MonoClass * mono_array_class_get(MonoClass *eclass, guint32 rank)
 
 gboolean mono_class_is_subclass_of(MonoClass *klass, MonoClass *klassc, gboolean check_interfaces)
 {
-    assert(!"mono_class_is_subclass_of");
+    if (klass == klassc) return true;
+    if (check_interfaces && klassc->IsInterface())
+    {
+        if (klass->ImplementsInterface(klassc)) return true;
+    }
+    else if(!klass->IsInterface() && !klass->IsArray() && klass != klassc)
+    {
+        if (klass->CanCastToClassNoGC(klassc) == TypeHandle::CanCast) return true;
+    }
+
+    if(klassc == g_pObjectClass) return true;
+    return false;
+}
+
+void mono_class_set_userdata(MonoClass *klass, void* userdata)
+{
+    klass->m_userData = userdata;
+}
+
+MonoDomain * mono_domain_get()
+{
+    return GetAppDomain();
+}
+
+MonoClass* mono_class_get_nesting_type(MonoClass *klass)
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+    }
+    CONTRACTL_END;
+
+    if (!klass->GetClass()->IsNested()) return nullptr;
+    auto typeDef = klass->GetCl();
+    mdTypeDef enclosingTypeDef;
+    if (FAILED(klass->GetModule()->GetMDImport()->GetNestedClassProps(typeDef, &enclosingTypeDef)))
+    {
+        _ASSERT(!"Cannot find enclosing typedef.");
+        return nullptr;
+    }
+
+    MonoClass* enclosingType;
+    EX_TRY
+    {
+        enclosingType = ClassLoader::LoadTypeDefThrowing(klass->GetModule(), enclosingTypeDef,
+            ClassLoader::ThrowIfNotFound,
+            ClassLoader::PermitUninstDefOrRef).GetMethodTable();
+    }
+    EX_CATCH
+    {
+        enclosingType = nullptr;
+    }
+    EX_END_CATCH(RethrowTerminalExceptions);
+    return enclosingType;
+}
+
+const char* mono_class_get_namespace (MonoClass *klass)
+{
+    assert(!"mono_class_get_namespace");
     throw;
 }

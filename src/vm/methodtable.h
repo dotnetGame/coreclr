@@ -4184,6 +4184,9 @@ private:
         TADDR               m_pMultipurposeSlot2;
     };
 
+    // Added for Unity
+    void* m_userData;
+
     // VTable and Non-Virtual slots go here
 
     // Overflow multipurpose slots go here

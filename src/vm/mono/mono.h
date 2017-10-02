@@ -44,7 +44,7 @@ typedef AppDomain MonoDomain;
 typedef PEAssembly MonoImage;
 struct MonoType;
 typedef MethodDesc MonoMethodSignature;
-struct MonoArray;
+typedef Object MonoArray;
 typedef Thread MonoThread;
 struct MonoVTable;
 struct MonoProperty;

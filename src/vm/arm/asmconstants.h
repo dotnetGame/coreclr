@@ -86,7 +86,7 @@ ASMCONSTANTS_C_ASSERT(MethodTable__enum_flag_ContainsPointers == MethodTable::en
 #define MethodTable__m_ElementType        DBG_FRE(0x24, 0x20)
 ASMCONSTANTS_C_ASSERT(MethodTable__m_ElementType == offsetof(MethodTable, m_pMultipurposeSlot1));
 
-#define SIZEOF__MethodTable             DBG_FRE(0x2c, 0x28)
+#define SIZEOF__MethodTable             DBG_FRE(0x30, 0x2C)
 ASMCONSTANTS_C_ASSERT(SIZEOF__MethodTable == sizeof(MethodTable));
 
 #define MethodTableWriteableData__m_dwFlags 0x00
