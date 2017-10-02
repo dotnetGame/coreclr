@@ -53,7 +53,7 @@ struct MonoReflectionMethod;
 struct MonoAppDomain;
 struct MonoCustomAttrInfo;
 
-struct MonoReflectionType { UInt32 offset[2]; MonoType* type; };
+typedef ReflectClassBaseObject MonoReflectionType;
 
 typedef const void* gconstpointer;
 typedef void* gpointer;

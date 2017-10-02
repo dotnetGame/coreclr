@@ -289,3 +289,38 @@ MonoType* mono_signature_get_return_type(MonoMethodSignature *sig)
     metaSig.GetReturnTypeNormalized(&typeHandle);
     return typeHandle.AsPtr();
 }
+
+MonoType* mono_class_get_type(MonoClass *klass)
+{
+    return TypeHandle(klass).AsPtr();
+}
+
+MonoReflectionType* mono_type_get_object(MonoDomain *domain, MonoType *type)
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+    }
+    CONTRACTL_END;
+
+    
+    MonoReflectionType* reflectionType = nullptr;
+    EX_TRY
+    {
+        GCX_COOP();
+        auto ref = TypeHandle::FromPtr(type).GetManagedClassObject();
+        if (ref != NULL)
+        {
+            reflectionType = static_cast<ReflectClassBaseObject*>(
+                OBJECTREFToObject(ref));
+        }
+    }
+    EX_CATCH
+    {
+        reflectionType = nullptr;
+    }
+    EX_END_CATCH(RethrowTerminalExceptions);
+    return reflectionType;
+}
