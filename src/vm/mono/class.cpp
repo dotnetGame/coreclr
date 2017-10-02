@@ -84,7 +84,7 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
     }
     CONTRACTL_END;
 #if _DEBUG
-    logger << "Invoke:" << method->m_pszDebugClassName << "::" << method->m_pszDebugMethodSignature << std::endl;
+    logger << "Invoke:" << method->m_pszDebugClassName << "::" << method->m_pszDebugMethodName << "," << method->m_pszDebugMethodSignature << std::endl;
 #endif
 
     MonoObject* ret = nullptr;
