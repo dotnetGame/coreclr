@@ -331,4 +331,6 @@ MonoClass* mono_class_get_element_class(MonoClass *klass)
         return klass->GetApproxArrayElementTypeHandle().AsMethodTable();//array.cpp 478 Line(May be NULL)
     if (klass->IsEnum())
         return MscorlibBinder::GetElementType(klass->GetInternalCorElementType());
+    _ASSERT(!"Cannot get element class.");
+    return nullptr;
 }
