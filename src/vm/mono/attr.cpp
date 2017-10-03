@@ -70,8 +70,17 @@ MonoCustomAttrInfo* mono_custom_attrs_from_method (MonoMethod *method)
 
 MonoCustomAttrInfo* mono_custom_attrs_from_class (MonoClass *klass)
 {
-    assert(!"mono_custom_attrs_from_class");
-    throw;
+    auto scope = klass->GetMDImport();
+    HENUMInternalHolder hEnum(scope);
+    hEnum.EnumInit(mdtCustomAttribute, klass->GetCl());
+
+    auto count = hEnum.EnumGetCount();
+    auto info = std::make_unique<MonoCustomAttrInfo>();
+    info->module = klass->GetModule();
+    info->scope = scope;
+    info->attributeTokens.resize(count);
+    for (size_t i = 0; i < count && scope->EnumNext(&hEnum, &info->attributeTokens[i]); i++);
+    return info.release();
 }
 MonoCustomAttrInfo* mono_custom_attrs_from_assembly (MonoAssembly *assembly)
 {

@@ -578,3 +578,43 @@ const char* mono_image_get_name(MonoImage *image)
 {
     return image->GetSimpleName();
 }
+
+gboolean mono_assembly_name_parse(const char *name, MonoAssemblyName *aname)
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+    }
+    CONTRACTL_END;
+
+    bool found = false;
+    EX_TRY
+    {
+        AssemblySpec spec;
+        spec.SetName(name);
+
+        CoreBindResult bindResult;
+        spec.Bind(GetAppDomain(), TRUE, &bindResult);
+        if (bindResult.Found())
+        {
+            ReleaseHolder<ICLRPrivAssembly> assemblyPriv;
+            bindResult.GetBindAssembly(&assemblyPriv);
+            auto assemblyName = BINDER_SPACE::GetAssemblyFromPrivAssemblyFast(assemblyPriv)->GetAssemblyName();
+            aname->name = assemblyName->GetSimpleName().GetUTF8NoConvert();
+            aname->public_key = assemblyName->GetPublicKeyTokenBLOB();
+
+            found = true;
+        }
+    }
+    EX_CATCH
+    {
+        found = false;
+#if _DEBUG
+        logger << "Bind failed: " << name << std::endl;
+#endif
+    }
+    EX_END_CATCH(RethrowCorruptingExceptions);
+    return found;
+}

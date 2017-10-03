@@ -105,6 +105,12 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
         int ofs;
         for (; TransitionBlock::InvalidOffset != (ofs = argIt.GetNextOffset()); arg++)
         {
+            TypeHandle argTypeHandle;
+            auto corType = argIt.GetArgType(&argTypeHandle);
+            if (!argTypeHandle.IsNull() && !argTypeHandle.IsFullyLoaded())
+            {
+                ClassLoader::EnsureLoaded(argTypeHandle);
+            }
             UINT32 stackSize = argIt.GetArgSize();
             switch (stackSize)
             {
@@ -119,7 +125,7 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
                 break;
 
             case 8:
-                switch (argIt.GetArgType())
+                switch (corType)
                 {
                 case ELEMENT_TYPE_ARRAY:
                 case ELEMENT_TYPE_PTR:
@@ -144,7 +150,25 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
         if (invoker.GetMetaSig()->GetReturnType() == ELEMENT_TYPE_VOID)
             invoker.Call(args.data());
         else
-            ret = invoker.Call_RetObjPtr(args.data());
+        {
+            auto retSlot = invoker.Call_RetArgSlot(args.data());
+            auto returnType = invoker.GetMetaSig()->GetReturnType();
+            switch (returnType)
+            {
+            case ELEMENT_TYPE_ARRAY:
+            case ELEMENT_TYPE_PTR:
+            case ELEMENT_TYPE_FNPTR:
+            case ELEMENT_TYPE_OBJECT:
+            case ELEMENT_TYPE_CLASS:
+            case ELEMENT_TYPE_SZARRAY:
+            case ELEMENT_TYPE_STRING:
+                ret = OBJECTREFToObject(ArgSlotToObj(retSlot));
+                break;
+            default:
+                ret = OBJECTREFToObject(MscorlibBinder::GetElementType(returnType)->Box(&retSlot));
+                break;
+            }
+        }
     }
     EX_CATCH
     {
@@ -323,4 +347,26 @@ MonoReflectionType* mono_type_get_object(MonoDomain *domain, MonoType *type)
     }
     EX_END_CATCH(RethrowTerminalExceptions);
     return reflectionType;
+}
+
+MonoType* mono_signature_get_params(MonoMethodSignature *sig, gpointer *iter)
+{
+    MetaSig metasig(sig);
+    ArgIterator argIt(&metasig);
+
+    DWORD arg = 0;
+    for (; TransitionBlock::InvalidOffset != argIt.GetNextOffset(); arg++)
+        if (arg == reinterpret_cast<DWORD>(*iter)) break;
+    if (arg == argIt.NumFixedArgs()) return nullptr;
+    *iter = reinterpret_cast<gpointer>(arg + 1);
+    TypeHandle argTypeHandle;
+    auto corType = argIt.GetArgType(&argTypeHandle);
+    if (argTypeHandle.IsNull())
+        argTypeHandle = MscorlibBinder::GetElementType(corType);
+    return argTypeHandle.AsPtr();
+}
+
+MonoClass * mono_class_from_mono_type(MonoType *type)
+{
+    return TypeHandle::FromPtr(type).GetMethodTable();
 }

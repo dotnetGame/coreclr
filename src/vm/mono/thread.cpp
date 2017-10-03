@@ -17,3 +17,9 @@ void mono_thread_set_main(MonoThread *thread)
 {
     s_mainThread = thread;
 }
+
+
+MonoThread * mono_thread_attach(MonoDomain *domain)
+{
+    return SetupThreadNoThrow();
+}
