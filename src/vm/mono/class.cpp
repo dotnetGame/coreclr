@@ -333,22 +333,23 @@ MonoReflectionType* mono_type_get_object(MonoDomain *domain, MonoType *type)
 
     
     MonoReflectionType* reflectionType = nullptr;
+    struct _gc
+    {
+        OBJECTREF pReflectClass;
+    } gc;
+    ZeroMemory(&gc, sizeof(gc));
+    GCX_COOP();
+    GCPROTECT_BEGIN(gc);
+
     EX_TRY
     {
-        GCX_COOP();
-        auto ref = TypeHandle::FromPtr(type).GetManagedClassObject();
-        if (ref != NULL)
-        {
-            reflectionType = static_cast<ReflectClassBaseObject*>(
-                OBJECTREFToObject(ref));
-        }
+        gc.pReflectClass = TypeHandle::FromPtr(type).GetManagedClassObject();
     }
     EX_CATCH
-    {
-        reflectionType = nullptr;
-    }
-    EX_END_CATCH(RethrowTerminalExceptions);
-    return reflectionType;
+    EX_END_CATCH(SwallowAllExceptions);
+    GCPROTECT_END();
+
+    return static_cast<ReflectClassBaseObject*>(OBJECTREFToObject(gc.pReflectClass));
 }
 
 MonoClass* mono_class_get_element_class(MonoClass *klass)

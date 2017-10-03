@@ -30,6 +30,16 @@ mono_object_new(MonoDomain *domain, MonoClass *klass)
     } gc;
     ZeroMemory(&gc, sizeof(gc));
     GCX_COOP();
+
+    auto type = ClassLoader::LoadTypeByNameThrowing(klass->GetAssembly(), "UnityEngine", "Event");
+    auto method = MemberLoader::FindMethodByName(type.GetMethodTable(), "Internal_MakeMasterEventCurrent");
+    ClassLoader::EnsureLoaded(type);
+    MethodDescCallSite invoker(method);
+    ARG_SLOT args[] = {
+        (ARG_SLOT)0
+    };
+    invoker.Call(args);
+
     GCPROTECT_BEGIN(gc);
 
     gc.pNewObject = AllocateObject(klass);
