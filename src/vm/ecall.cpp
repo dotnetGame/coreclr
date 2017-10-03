@@ -11,6 +11,7 @@
 #include "common.h"
 
 #include "ecall.h"
+#include "runtimeecall.h"
 
 #include "comdelegate.h"
 
@@ -251,6 +252,45 @@ static ECFunc *FindECFuncForID(DWORD id)
     return (ECFunc*)(c_rgECClasses[ImplsIndex].m_pECFunc + ECIndex);
 }
 
+#define FCFuncFlags(intrinsicID, dynamicID) \
+    (BYTE*)( (((BYTE)intrinsicID) << 16) + (((BYTE)dynamicID) << 24) )
+
+std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, ECFunc>>> RuntimeECall::s_ECClasses;
+
+void RuntimeECall::RegisterECFunc(const char* name, LPVOID code)
+{
+    std::string newName(name);
+    auto clsOff = newName.find(':');
+    auto method = _strdup(newName.substr(clsOff + 2).c_str());
+    auto nsOff = newName.find_last_of('.', clsOff);
+    auto ns = _strdup(newName.substr(0, nsOff).c_str());
+    nsOff += 1;
+    auto cls = _strdup(newName.substr(nsOff, clsOff - nsOff).c_str());
+
+    ECFunc func{};
+    func.m_szMethodName = name;
+    func.m_pImplementation = code;
+    func.m_dwFlags = UINT_PTR(FCFuncFlags(CORINFO_INTRINSIC_Illegal, ECall::InvalidDynamicFCallId));
+    s_ECClasses[ns][cls][method] = func;
+}
+
+ECFunc* RuntimeECall::GetECFuncForMethod(MethodDesc *pMD)
+{
+    LPCUTF8 pszNamespace = 0;
+    LPCUTF8 pszName = pMD->GetMethodTable()->GetFullyQualifiedNameInfo(&pszNamespace);
+
+    auto nsIt = s_ECClasses.find(pszNamespace);
+    if (nsIt == s_ECClasses.end()) return nullptr;
+    auto& classes = nsIt->second;
+    auto clsIt = classes.find(pszName);
+    if (clsIt == classes.end()) return nullptr;
+
+    LPCUTF8 szMethodName = pMD->GetName();
+    auto funcIt = clsIt->second.find(szMethodName);
+    if (funcIt == clsIt->second.end()) return nullptr;
+    return &funcIt->second;
+}
+
 static ECFunc* FindECFuncForMethod(MethodDesc* pMD)
 {
     CONTRACTL
@@ -263,11 +303,14 @@ static ECFunc* FindECFuncForMethod(MethodDesc* pMD)
     CONTRACTL_END;
 
     DWORD id = ((FCallMethodDesc *)pMD)->GetECallID();
+    ECFunc* dynamicFunc = 0;
     if (id == 0)
     {
         id = ECall::GetIDForMethod(pMD);
+        if(id == 0)
+            dynamicFunc = RuntimeECall::GetECFuncForMethod(pMD);
         
-        CONSISTENCY_CHECK_MSGF(0 != id,
+        CONSISTENCY_CHECK_MSGF(0 != id || dynamicFunc,
                     ("No method entry found for %s::%s.\n",
                     pMD->m_pszDebugClassName, pMD->m_pszDebugMethodName));
             
@@ -275,7 +318,10 @@ static ECFunc* FindECFuncForMethod(MethodDesc* pMD)
         ((FCallMethodDesc *)pMD)->SetECallID(id);
     }
 
-    return FindECFuncForID(id);
+    if (dynamicFunc)
+        return dynamicFunc;
+    else
+        return FindECFuncForID(id);
 }
 
 /*******************************************************************************
@@ -330,8 +376,9 @@ PCODE ECall::GetFCallImpl(MethodDesc * pMD, BOOL * pfSharedOrDynamicFCallImpl /*
     }
 #endif // FEATURE_COMINTEROP
 
-    if (!pMD->GetModule()->IsSystem())
-        COMPlusThrow(kSecurityException, BFA_ECALLS_MUST_BE_IN_SYS_MOD);
+    // Comment following lines for Unity
+    // if (!pMD->GetModule()->IsSystem())
+    //    COMPlusThrow(kSecurityException, BFA_ECALLS_MUST_BE_IN_SYS_MOD);
 
     ECFunc* ret = FindECFuncForMethod(pMD);
 
