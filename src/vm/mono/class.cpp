@@ -169,12 +169,14 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
                 break;
             }
         }
+        *exc = nullptr;
     }
     EX_CATCH
     {
+        GCX_COOP();
         *exc = OBJECTREFToObject(GET_THROWABLE());
     }
-    EX_END_CATCH(RethrowTerminalExceptions);
+    EX_END_CATCH(SwallowAllExceptions);
     return ret;
 }
 

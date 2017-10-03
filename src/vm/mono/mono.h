@@ -35,7 +35,7 @@ typedef uintptr_t gsize;
 
 typedef gboolean(*MonoCoreClrPlatformCB) (const char *image_name);
 
-struct MonoException;
+typedef ExceptionObject MonoException;
 typedef Assembly MonoAssembly;
 typedef Object MonoObject;
 struct MonoClassField;

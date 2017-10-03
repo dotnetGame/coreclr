@@ -14,6 +14,7 @@ set(VM_SOURCES_MONO
     unity_liveness.cpp
     attr.cpp
     except.cpp
+    object.cpp
 )
 
 convert_to_absolute_path(VM_SOURCES_MONO ${VM_SOURCES_MONO})
