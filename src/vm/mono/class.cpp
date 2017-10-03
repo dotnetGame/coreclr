@@ -289,3 +289,11 @@ MonoType* mono_signature_get_return_type(MonoMethodSignature *sig)
     metaSig.GetReturnTypeNormalized(&typeHandle);
     return typeHandle.AsPtr();
 }
+
+MonoClass* mono_class_get_element_class(MonoClass *klass)
+{
+    if (klass->IsArray())
+        return klass->GetApproxArrayElementTypeHandle().AsMethodTable();//array.cpp 478 Line(May be NULL)
+    if (klass->IsEnum())
+        return MscorlibBinder::GetElementType(klass->GetInternalCorElementType());
+}
