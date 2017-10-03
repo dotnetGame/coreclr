@@ -87,10 +87,16 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
     logger << "Invoke:" << method->m_pszDebugClassName << "::" << method->m_pszDebugMethodName << "," << method->m_pszDebugMethodSignature << std::endl;
 #endif
 
-    MonoObject* ret = nullptr;
+    struct _gc {
+        OBJECTREF pReturnObject;
+        EXCEPTIONREF pException;
+    } gc;
+    ZeroMemory(&gc, sizeof(gc));
+    GCX_COOP();
+    GCPROTECT_BEGIN(gc);
+
     EX_TRY
     {
-        GCX_COOP();
         MethodDescCallSite invoker(method);
         ArgIterator argIt(invoker.GetMetaSig());
         std::vector<ARG_SLOT> args;
@@ -165,10 +171,10 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
             case ELEMENT_TYPE_CLASS:
             case ELEMENT_TYPE_SZARRAY:
             case ELEMENT_TYPE_STRING:
-                ret = OBJECTREFToObject(ArgSlotToObj(retSlot));
+                gc.pReturnObject = ArgSlotToObj(retSlot);
                 break;
             default:
-                ret = OBJECTREFToObject(MscorlibBinder::GetElementType(returnType)->Box(&retSlot));
+                gc.pReturnObject = (MscorlibBinder::GetElementType(returnType)->Box(&retSlot));
                 break;
             }
         }
@@ -176,17 +182,18 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
     }
     EX_CATCH
     {
-        GCX_COOP();
-        *exc = OBJECTREFToObject(GET_THROWABLE());
+        gc.pException = GET_THROWABLE();
 #if _DEBUG
         SString ex, ex2;
-        ex = ((MonoException*)*exc)->GetMessage()->GetBuffer();
+        ex = gc.pException->GetMessage()->GetBuffer();
         ex.ConvertToUTF8(ex2);
         logger << ex2.GetUTF8NoConvert() << std::endl;
 #endif
     }
     EX_END_CATCH(SwallowAllExceptions);
-    return ret;
+    GCPROTECT_END();
+    if (exc) *exc = OBJECTREFToObject(gc.pException);
+    return OBJECTREFToObject(gc.pReturnObject);
 }
 
 MonoImage* mono_class_get_image(MonoClass *klass)

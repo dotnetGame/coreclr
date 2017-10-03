@@ -1174,7 +1174,6 @@ OBJECTREF AllocateObject(MethodTable *pMT
         }
 
         // verify zero'd memory (at least for sync block)
-        _ASSERTE(*reinterpret_cast<intptr_t*>(orObject->GetHeader()) == 0);
         _ASSERTE( orObject->HasEmptySyncBlockInfo() );
 
 
