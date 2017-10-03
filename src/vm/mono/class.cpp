@@ -84,7 +84,7 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
     }
     CONTRACTL_END;
 #if _DEBUG
-    logger << "Invoke:" << method->m_pszDebugClassName << "::" << method->m_pszDebugMethodSignature << std::endl;
+    logger << "Invoke:" << method->m_pszDebugClassName << "::" << method->m_pszDebugMethodName << "," << method->m_pszDebugMethodSignature << std::endl;
 #endif
 
     MonoObject* ret = nullptr;
@@ -288,6 +288,41 @@ MonoType* mono_signature_get_return_type(MonoMethodSignature *sig)
     TypeHandle typeHandle;
     metaSig.GetReturnTypeNormalized(&typeHandle);
     return typeHandle.AsPtr();
+}
+
+MonoType* mono_class_get_type(MonoClass *klass)
+{
+    return TypeHandle(klass).AsPtr();
+}
+
+MonoReflectionType* mono_type_get_object(MonoDomain *domain, MonoType *type)
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+    }
+    CONTRACTL_END;
+
+    
+    MonoReflectionType* reflectionType = nullptr;
+    EX_TRY
+    {
+        GCX_COOP();
+        auto ref = TypeHandle::FromPtr(type).GetManagedClassObject();
+        if (ref != NULL)
+        {
+            reflectionType = static_cast<ReflectClassBaseObject*>(
+                OBJECTREFToObject(ref));
+        }
+    }
+    EX_CATCH
+    {
+        reflectionType = nullptr;
+    }
+    EX_END_CATCH(RethrowTerminalExceptions);
+    return reflectionType;
 }
 
 MonoClass* mono_class_get_element_class(MonoClass *klass)
