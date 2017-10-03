@@ -62,3 +62,16 @@ mono_object_new_specific(MonoVTable *vtable)
     assert(!"mono_object_new_specific");
     throw;
 }
+
+char * mono_string_to_utf8(MonoString *s)
+{
+    if (!s) return nullptr;
+    SString str(SString::Literal, s->GetBuffer()), str2;
+    str.ConvertToUTF8(str2);
+    return _strdup(str2.GetUTF8NoConvert());
+}
+
+void mono_unity_g_free(void* ptr)
+{
+    free(ptr);
+}

@@ -78,7 +78,7 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
 {
     CONTRACTL
     {
-        NOTHROW;
+        THROWS;
         GC_TRIGGERS;
         MODE_ANY;
     }
@@ -136,6 +136,9 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
                 case ELEMENT_TYPE_STRING:
                     args.emplace_back(ObjToArgSlot((OBJECTREF)reinterpret_cast<Object*>(params[arg])));
                     break;
+                case ELEMENT_TYPE_BYREF:
+                    args.emplace_back(PtrToArgSlot(params[arg]));
+                    break;
                 default:
                     args.emplace_back((ARG_SLOT)*reinterpret_cast<UINT64*>(params[arg]));
                     break;
@@ -175,6 +178,12 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
     {
         GCX_COOP();
         *exc = OBJECTREFToObject(GET_THROWABLE());
+#if _DEBUG
+        SString ex, ex2;
+        ex = ((MonoException*)*exc)->GetMessage()->GetBuffer();
+        ex.ConvertToUTF8(ex2);
+        logger << ex2.GetUTF8NoConvert() << std::endl;
+#endif
     }
     EX_END_CATCH(SwallowAllExceptions);
     return ret;

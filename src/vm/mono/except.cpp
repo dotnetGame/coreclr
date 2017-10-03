@@ -12,7 +12,7 @@ MonoException * mono_exception_from_name_msg (MonoImage *image, const char *name
     CONTRACTL_END;
 
     struct _gc {
-        OBJECTREF pNewException;
+        EXCEPTIONREF pNewException;
         STRINGREF pMessage;
     } gc;
     ZeroMemory(&gc, sizeof(gc));
@@ -25,14 +25,15 @@ MonoException * mono_exception_from_name_msg (MonoImage *image, const char *name
     
     gc.pNewException = AllocateObject(exceptClass);
     gc.pMessage = StringObject::NewString(msg);
-    MethodDescCallSite invoker(ctor);
+    MethodDescCallSite invoker(ctor, &gc.pNewException);
     ARG_SLOT args[] = {
+        ObjToArgSlot(gc.pNewException),
         ObjToArgSlot(gc.pMessage)
     };
     invoker.Call(args);
 
     GCPROTECT_END();
-    return static_cast<MonoException*>(OBJECTREFToObject(gc.pNewException));
+    return OBJECTREFToObject(gc.pNewException);
 }
 
 MonoException * mono_exception_from_name_two_strings (MonoImage *image, const char *name_space, MonoString *a1, MonoString *a2)

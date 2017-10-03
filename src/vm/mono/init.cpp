@@ -615,6 +615,6 @@ gboolean mono_assembly_name_parse(const char *name, MonoAssemblyName *aname)
         logger << "Bind failed: " << name << std::endl;
 #endif
     }
-    EX_END_CATCH(RethrowCorruptingExceptions);
+    EX_END_CATCH(SwallowAllExceptions);
     return found;
 }
