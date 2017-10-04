@@ -583,38 +583,26 @@ gboolean mono_assembly_name_parse(const char *name, MonoAssemblyName *aname)
 {
     CONTRACTL
     {
-        NOTHROW;
+        THROWS;
         GC_TRIGGERS;
         MODE_ANY;
     }
     CONTRACTL_END;
 
-    bool found = false;
-    EX_TRY
-    {
-        AssemblySpec spec;
-        spec.SetName(name);
+    AssemblySpec spec;
+    spec.SetName(name);
 
-        CoreBindResult bindResult;
-        spec.Bind(GetAppDomain(), TRUE, &bindResult);
-        if (bindResult.Found())
-        {
-            ReleaseHolder<ICLRPrivAssembly> assemblyPriv;
-            bindResult.GetBindAssembly(&assemblyPriv);
-            auto assemblyName = BINDER_SPACE::GetAssemblyFromPrivAssemblyFast(assemblyPriv)->GetAssemblyName();
-            aname->name = assemblyName->GetSimpleName().GetUTF8NoConvert();
-            aname->public_key = assemblyName->GetPublicKeyTokenBLOB();
-
-            found = true;
-        }
-    }
-    EX_CATCH
+    CoreBindResult bindResult;
+    spec.Bind(GetAppDomain(), FALSE, &bindResult);
+    if (bindResult.Found())
     {
-        found = false;
-#if _DEBUG
-        logger << "Bind failed: " << name << std::endl;
-#endif
+        ReleaseHolder<ICLRPrivAssembly> assemblyPriv;
+        bindResult.GetBindAssembly(&assemblyPriv);
+        auto assemblyName = BINDER_SPACE::GetAssemblyFromPrivAssemblyFast(assemblyPriv)->GetAssemblyName();
+        aname->name = assemblyName->GetSimpleName().GetUTF8NoConvert();
+        aname->public_key = assemblyName->GetPublicKeyTokenBLOB();
+
+        return true;
     }
-    EX_END_CATCH(SwallowAllExceptions);
-    return found;
+    return false;
 }

@@ -3,20 +3,17 @@
 
 MonoException * mono_exception_from_name_msg (MonoImage *image, const char *name_space, const char *name, const char *msg)
 {
-    CONTRACTL
-    {
-        GC_TRIGGERS;
+    CONTRACTL{
         THROWS;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
+        GC_TRIGGERS;
+        MODE_COOPERATIVE;
+    } CONTRACTL_END;
 
     struct _gc {
         EXCEPTIONREF pNewException;
         STRINGREF pMessage;
     } gc;
     ZeroMemory(&gc, sizeof(gc));
-    GCX_COOP();
     GCPROTECT_BEGIN(gc);
 
     auto assembly = GetAppDomain()->FindAssembly(image);
@@ -47,8 +44,10 @@ MonoException* mono_get_exception_argument_null (const char *arg)
     throw;
 }
 
-void mono_raise_exception (MonoException *ex) 
+void DECLSPEC_NORETURN mono_raise_exception (MonoException *ex)
 {
+    FCALL_CONTRACT;
+
     COMPlusThrow(ObjectToOBJECTREF(ex));
 }
 

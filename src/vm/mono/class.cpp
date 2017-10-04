@@ -10,30 +10,17 @@ int mono_class_get_userdata_offset()
 
 MonoClass * mono_class_from_name(MonoImage *image, const char* name_space, const char *name)
 {
-    MonoClass* klass = nullptr;
-    EX_TRY
-    {
-        auto assembly = GetAppDomain()->FindAssembly(image);
-        if (assembly)
-        {
-#if _DEBUG
-            logger << "Load class:" << name_space << "::" << name << std::endl;
-#endif
+    STANDARD_VM_CONTRACT;
 
-            klass = ClassLoader::LoadTypeByNameThrowing(assembly->GetAssembly(), name_space, name).GetMethodTable();
-        }
-    }
-    EX_CATCH
+    MonoClass* klass = nullptr;
+
+    auto assembly = GetAppDomain()->FindAssembly(image);
+    if (assembly)
     {
-        SString ex;
-        GET_EXCEPTION()->GetMessage(ex);
-        SString ex2;
-        ex.ConvertToUTF8(ex2);
-#if _DEBUG
-        logger << "Load failed: " << ex2.GetUTF8NoConvert() << std::endl;
-#endif
+        klass = ClassLoader::LoadTypeByNameThrowing(assembly->GetAssembly(),
+            name_space, name, ClassLoader::ReturnNullIfNotFound).GetMethodTable();
     }
-    EX_END_CATCH(SwallowAllExceptions);
+
     return klass;
 }
 
@@ -87,19 +74,20 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
     logger << "Invoke:" << method->m_pszDebugClassName << "::" << method->m_pszDebugMethodName << "," << method->m_pszDebugMethodSignature << std::endl;
 #endif
 
+    MonoObject* ret = nullptr;
     struct _gc {
         OBJECTREF pReturnObject;
         EXCEPTIONREF pException;
     } gc;
     ZeroMemory(&gc, sizeof(gc));
+    COOPERATIVE_TRANSITION_BEGIN();
     GCX_COOP();
     GCPROTECT_BEGIN(gc);
 
-    EX_TRY
+    MethodDescCallSite invoker(method);
+    std::vector<ARG_SLOT> args;
     {
-        MethodDescCallSite invoker(method);
         ArgIterator argIt(invoker.GetMetaSig());
-        std::vector<ARG_SLOT> args;
         if (argIt.HasThis())
             args.emplace_back(PtrToArgSlot(obj));
 
@@ -155,7 +143,10 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
                 args.emplace_back(PtrToArgSlot(params[arg]));
             }
         }
-        argIt.GetSig()->Reset();
+        invoker.GetMetaSig()->Reset();
+    }
+    EX_TRY
+    {
         if (invoker.GetMetaSig()->GetReturnType() == ELEMENT_TYPE_VOID)
             invoker.Call(args.data());
         else
@@ -178,22 +169,13 @@ MonoObject* mono_runtime_invoke(MonoMethod *method, void *obj, void **params, Mo
                 break;
             }
         }
-        *exc = nullptr;
     }
-    EX_CATCH
-    {
-        gc.pException = GET_THROWABLE();
-#if _DEBUG
-        SString ex, ex2;
-        ex = gc.pException->GetMessage()->GetBuffer();
-        ex.ConvertToUTF8(ex2);
-        logger << ex2.GetUTF8NoConvert() << std::endl;
-#endif
-    }
-    EX_END_CATCH(SwallowAllExceptions);
+    EX_CATCH_THROWABLE(&gc.pException);
     GCPROTECT_END();
     if (exc) *exc = OBJECTREFToObject(gc.pException);
-    return OBJECTREFToObject(gc.pReturnObject);
+    ret = OBJECTREFToObject(gc.pReturnObject);
+    COOPERATIVE_TRANSITION_END();
+    return ret;
 }
 
 MonoImage* mono_class_get_image(MonoClass *klass)
@@ -218,12 +200,12 @@ gboolean mono_class_is_subclass_of(MonoClass *klass, MonoClass *klassc, gboolean
     {
         if (klass->ImplementsInterface(klassc)) return true;
     }
-    else if(!klass->IsInterface() && !klass->IsArray() && klass != klassc)
+    else if (!klass->IsInterface() && !klass->IsArray() && klass != klassc)
     {
         if (klass->CanCastToClassNoGC(klassc) == TypeHandle::CanCast) return true;
     }
 
-    if(klassc == g_pObjectClass) return true;
+    if (klassc == g_pObjectClass) return true;
     return false;
 }
 
@@ -241,7 +223,7 @@ MonoClass* mono_class_get_nesting_type(MonoClass *klass)
 {
     CONTRACTL
     {
-        NOTHROW;
+        THROWS;
         GC_TRIGGERS;
         MODE_ANY;
     }
@@ -255,23 +237,12 @@ MonoClass* mono_class_get_nesting_type(MonoClass *klass)
         _ASSERT(!"Cannot find enclosing typedef.");
         return nullptr;
     }
-
-    MonoClass* enclosingType;
-    EX_TRY
-    {
-        enclosingType = ClassLoader::LoadTypeDefThrowing(klass->GetModule(), enclosingTypeDef,
+    return ClassLoader::LoadTypeDefThrowing(klass->GetModule(), enclosingTypeDef,
             ClassLoader::ThrowIfNotFound,
             ClassLoader::PermitUninstDefOrRef).GetMethodTable();
-    }
-    EX_CATCH
-    {
-        enclosingType = nullptr;
-    }
-    EX_END_CATCH(RethrowTerminalExceptions);
-    return enclosingType;
 }
 
-const char* mono_class_get_namespace (MonoClass *klass)
+const char* mono_class_get_namespace(MonoClass *klass)
 {
     LPCSTR namespaceName;
     if (FAILED(klass->GetMDImport()->GetNameOfTypeDef(klass->GetCl(), nullptr, &namespaceName)))
@@ -341,31 +312,26 @@ MonoReflectionType* mono_type_get_object(MonoDomain *domain, MonoType *type)
 {
     CONTRACTL
     {
-        NOTHROW;
+        THROWS;
         GC_TRIGGERS;
         MODE_ANY;
     }
     CONTRACTL_END;
 
-    
-    MonoReflectionType* reflectionType = nullptr;
     struct _gc
     {
-        OBJECTREF pReflectClass;
+        REF<ReflectClassBaseObject> pReflectClass;
     } gc;
     ZeroMemory(&gc, sizeof(gc));
     GCX_COOP();
-    GCPROTECT_BEGIN(gc);
 
-    EX_TRY
+    GCPROTECT_BEGIN(gc);
     {
         gc.pReflectClass = TypeHandle::FromPtr(type).GetManagedClassObject();
     }
-    EX_CATCH
-    EX_END_CATCH(SwallowAllExceptions);
     GCPROTECT_END();
 
-    return static_cast<ReflectClassBaseObject*>(OBJECTREFToObject(gc.pReflectClass));
+    return OBJECTREFToObject(gc.pReflectClass);
 }
 
 MonoClass* mono_class_get_element_class(MonoClass *klass)

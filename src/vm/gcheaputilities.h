@@ -127,7 +127,7 @@ public:
 #if defined(_TARGET_ARM_) || defined(FEATURE_PAL) || defined(FEATURE_REDHAWK)
         return true;
 #else
-        return IsServerHeap() || ::GetCurrentProcessCpuCount() != 1;
+        return false;// IsServerHeap() || ::GetCurrentProcessCpuCount() != 1;
 #endif
 
     }
