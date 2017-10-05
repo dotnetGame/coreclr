@@ -177,7 +177,7 @@ int __cdecl main(int argc, char* argv[])
     // 'My' contains the MethodTable*
     uint32_t baseSize = sizeof(My);
     // GC expects the size of ObjHeader (extra void*) to be included in the size.
-    baseSize = baseSize + sizeof(ObjHeader);
+    baseSize = baseSize;
     // Add padding as necessary. GC requires the object size to be at least MIN_OBJECT_SIZE.
     My_MethodTable.m_MT.m_baseSize = max(baseSize, MIN_OBJECT_SIZE);
 

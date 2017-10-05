@@ -1288,7 +1288,7 @@ class ObjHeader
     PTR_Object GetBaseObject()
     {
         LIMITED_METHOD_DAC_CONTRACT;
-        return dac_cast<PTR_Object>(dac_cast<TADDR>(this + 1));
+        return dac_cast<PTR_Object>(dac_cast<TADDR>(this - 1));
     }
 
     BOOL Wait(INT32 timeOut, BOOL exitContext);
@@ -1364,7 +1364,7 @@ struct ThreadQueue
 // The true size of an object is whatever C++ thinks, plus the ObjHeader we
 // allocate before it.
 
-#define ObjSizeOf(c)    (sizeof(c) + sizeof(ObjHeader))
+#define ObjSizeOf(c)    (sizeof(c))
 
 
 inline void AwareLock::SetPrecious()

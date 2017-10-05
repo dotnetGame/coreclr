@@ -1838,6 +1838,7 @@ typedef void* CORINFO_MethodPtr;            // a generic method pointer
 struct CORINFO_Object
 {
     CORINFO_MethodPtr      *methTable;      // the vtable for the object
+    intptr_t                header;
 };
 
 struct CORINFO_String : public CORINFO_Object

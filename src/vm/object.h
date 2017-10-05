@@ -187,8 +187,10 @@ private:
 // 
 class Object
 {
+    friend class CheckAsmOffsets;
   protected:
     PTR_MethodTable m_pMethTab;
+    ObjHeader m_Header;
 
   protected:
     Object() { LIMITED_METHOD_CONTRACT; };
@@ -295,7 +297,7 @@ class Object
     PTR_ObjHeader   GetHeader()
     {
         LIMITED_METHOD_DAC_CONTRACT;
-        return dac_cast<PTR_ObjHeader>(this) - 1;
+        return dac_cast<PTR_ObjHeader>(this) + 1;
     }
 
     // Get the current address of the object (works for debug refs, too.)

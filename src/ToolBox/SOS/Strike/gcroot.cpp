@@ -1278,7 +1278,7 @@ void PrintNotReachableInRange(TADDR rngStart, TADDR rngEnd, BOOL bExcludeReadyFo
         TADDR obj = 0;
         TADDR taddrMT = 0;
         
-        bool read = cache.Read(p-sizeof(SIZEOF_OBJHEADER), &header);
+        bool read = cache.Read(p+sizeof(MethodTable*), &header);
         read = read && cache.Read(p, &obj);
         if (read && ((header & BIT_SBLK_FINALIZER_RUN) == 0) && liveObjs.find(obj) == liveObjs.end())
         {

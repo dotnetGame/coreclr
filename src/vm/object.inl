@@ -74,14 +74,14 @@ inline void Object::EnumMemoryRegions(void)
 
     PTR_MethodTable methodTable = GetGCSafeMethodTable();
 
-    TADDR ptr = dac_cast<TADDR>(this) - sizeof(ObjHeader);
-    SIZE_T size = sizeof(ObjHeader) + sizeof(Object);
+    TADDR ptr = dac_cast<TADDR>(this);
+    SIZE_T size = sizeof(Object);
 
     // If it is unsafe to touch the MethodTable so just enumerate
     // the base object.
     if (methodTable.IsValid())
     {
-        size = sizeof(ObjHeader) + GetSize();
+        size = GetSize();
     }
 
 #if defined (_DEBUG)
@@ -208,8 +208,7 @@ inline /* static */ unsigned ArrayBase::GetDataPtrOffset(MethodTable* pMT)
 #if !defined(DACCESS_COMPILE)
     _ASSERTE(pMT->IsArray());
 #endif // DACCESS_COMPILE
-    // The -sizeof(ObjHeader) is because of the sync block, which is before "this"
-    return pMT->GetBaseSize() - sizeof(ObjHeader);
+    return pMT->GetBaseSize();
 }
 
 inline /* static */ unsigned ArrayBase::GetBoundsOffset(MethodTable* pMT) 

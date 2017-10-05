@@ -89,7 +89,7 @@ namespace sos
 
         ObjectHeader header;
 
-        if (SUCCEEDED(rvCache->Read(TO_TADDR(GetAddress() - sizeof(ObjectHeader)), &header, sizeof(ObjectHeader), NULL)))
+        if (SUCCEEDED(rvCache->Read(TO_TADDR(GetAddress() + sizeof(MethodTable*)), &header, sizeof(ObjectHeader), NULL)))
         {
             outHeader = header.SyncBlockValue;
             return true;

@@ -531,12 +531,12 @@ void MscorlibBinder::Check()
                 continue;
 
             // hidden size of the type that participates in the alignment calculation
-            DWORD hiddenSize = pMT->IsValueType() ? sizeof(MethodTable*) : 0;
+            DWORD hiddenSize = pMT->IsValueType() ? sizeof(MethodTable*) + sizeof(ObjHeader) : 0;
 
-            DWORD size = pMT->GetBaseSize() - (sizeof(ObjHeader)+hiddenSize);
+            DWORD size = pMT->GetBaseSize() - (hiddenSize);
 
-            DWORD expectedsize = (DWORD)ALIGN_UP(p->expectedClassSize + (sizeof(ObjHeader) + hiddenSize),
-                DATA_ALIGNMENT) - (sizeof(ObjHeader) + hiddenSize);
+            DWORD expectedsize = (DWORD)ALIGN_UP(p->expectedClassSize + (hiddenSize),
+                DATA_ALIGNMENT) - (hiddenSize);
 
             CONSISTENCY_CHECK_MSGF(size == expectedsize,
                 ("Managed object size does not match unmanaged object size\n"
