@@ -929,7 +929,7 @@ NESTED_ENTRY JIT_MonEnterWorker_Slow, _TEXT
         jnz     FramedLockHelper
 
         ; r8 will hold the syncblockindex address
-        lea     r8, [rcx - OFFSETOF__ObjHeader__SyncBlkIndex]
+        lea     r8, [rcx + OFFSETOF__ObjHeader__SyncBlkIndex]
 
     RetryThinLock:
         ; Fetch the syncblock dword
@@ -1167,7 +1167,7 @@ NESTED_ENTRY JIT_MonExitWorker_Slow, _TEXT
         mov     r11, rax
 
         ; r8 will hold the syncblockindex address
-        lea     r8, [rcx - OFFSETOF__ObjHeader__SyncBlkIndex]
+        lea     r8, [rcx + OFFSETOF__ObjHeader__SyncBlkIndex]
 
     RetryThinLock:
         ; Fetch the syncblock dword
@@ -1351,7 +1351,7 @@ NESTED_ENTRY JIT_MonTryEnter_Slow, _TEXT
         jnz     FramedLockHelper
 
         ; r9 will hold the syncblockindex address
-        lea     r9, [rcx - OFFSETOF__ObjHeader__SyncBlkIndex]
+        lea     r9, [rcx + OFFSETOF__ObjHeader__SyncBlkIndex]
 
     RetryThinLock:
         ; Fetch the syncblock dword

@@ -120,9 +120,9 @@ namespace System.Runtime.CompilerServices
                 // This property allows C#'s fixed statement to work on Strings.
                 // On 64 bit platforms, this should be 12 (8+4) and on 32 bit 8 (4+4).
 #if BIT64
-                return 12;
+                return 20;
 #else // 32
-                return 8;
+                return 12;
 #endif // BIT64
             }
         }

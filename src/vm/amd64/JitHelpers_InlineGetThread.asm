@@ -426,7 +426,7 @@ endif
         jnz     FramedLockHelper
 
         ; r8 will hold the syncblockindex address
-        lea     r8, [rcx - OFFSETOF__ObjHeader__SyncBlkIndex]
+        lea     r8, [rcx + OFFSETOF__ObjHeader__SyncBlkIndex]
 
     RetryThinLock:
         ; Fetch the syncblock dword
@@ -684,7 +684,7 @@ endif
         PATCHABLE_INLINE_GETTHREAD r11, JIT_MonExitWorker_InlineGetThread_GetThread_PatchLabel
 
         ; r8 will hold the syncblockindex address
-        lea     r8, [rcx - OFFSETOF__ObjHeader__SyncBlkIndex]
+        lea     r8, [rcx + OFFSETOF__ObjHeader__SyncBlkIndex]
 
     RetryThinLock:
         ; Fetch the syncblock dword
@@ -869,7 +869,7 @@ endif
         jnz     FramedLockHelper
 
         ; r9 will hold the syncblockindex address
-        lea     r9, [rcx - OFFSETOF__ObjHeader__SyncBlkIndex]
+        lea     r9, [rcx + OFFSETOF__ObjHeader__SyncBlkIndex]
 
     RetryThinLock:
         ; Fetch the syncblock dword

@@ -184,9 +184,9 @@ ASMCONSTANTS_C_ASSERT(THREAD_CATCHATSAFEPOINT_BITS == Thread::TS_CatchAtSafePoin
 #define               OFFSETOF__NDirectMethodDesc__m_pWriteableData DBG_FRE(0x48, 0x20)
 ASMCONSTANTS_C_ASSERT(OFFSETOF__NDirectMethodDesc__m_pWriteableData == offsetof(NDirectMethodDesc, ndirect.m_pWriteableData));
 
-#define               OFFSETOF__ObjHeader__SyncBlkIndex         0x4
+#define               OFFSETOF__ObjHeader__SyncBlkIndex         0xC
 ASMCONSTANTS_C_ASSERT(OFFSETOF__ObjHeader__SyncBlkIndex
-                    == (sizeof(ObjHeader) - offsetof(ObjHeader, m_SyncBlockValue)));
+                    == (offsetof(Object, m_Header) + offsetof(ObjHeader, m_SyncBlockValue)));
 
 #define           SIZEOF__SyncTableEntry                    0x10
 ASMCONSTANT_SIZEOF_ASSERT(SyncTableEntry);

@@ -3627,7 +3627,7 @@ void ObjHeader::IllegalAlignPad()
 {
     WRAPPER_NO_CONTRACT;
 #ifdef LOGGING
-    void** object = ((void**) this) + 1;
+    void** object = ((void**) this) - 1;
     LogSpewAlways("\n\n******** Illegal ObjHeader m_alignpad not 0, object" FMT_ADDR "\n\n",
                   DBG_ADDR(object));
 #endif
