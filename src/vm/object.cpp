@@ -1565,7 +1565,7 @@ void STDCALL CopyValueClassUnchecked(void* dest, void* src, MethodTable *pMT)
         {   
             // offset to embedded references in this series must be
             // adjusted by the VTable pointer, when in the unboxed state.
-            size_t offset = cur->GetSeriesOffset() - sizeof(void*);
+            size_t offset = cur->GetSeriesOffset() - sizeof(Object);
             OBJECTREF* srcPtr = (OBJECTREF*)(((BYTE*) src) + offset);
             OBJECTREF* destPtr = (OBJECTREF*)(((BYTE*) dest) + offset);
             OBJECTREF* srcPtrStop = (OBJECTREF*)((BYTE*) srcPtr + cur->GetSeriesSize() + size);         

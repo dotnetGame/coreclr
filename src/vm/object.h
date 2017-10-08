@@ -166,7 +166,7 @@ private:
 // The generational GC requires that every object be at least 12 bytes
 // in size.   
 
-#define MIN_OBJECT_SIZE     (2*sizeof(BYTE*) + sizeof(ObjHeader))
+#define MIN_OBJECT_SIZE     (3*sizeof(BYTE*) + sizeof(ObjHeader))
 
 #define PTRALIGNCONST (DATA_ALIGNMENT-1)
 
@@ -189,6 +189,7 @@ class Object
 {
   protected:
     PTR_MethodTable m_pMethTab;
+    void * m_UnityPadding;
 
   protected:
     Object() { LIMITED_METHOD_CONTRACT; };

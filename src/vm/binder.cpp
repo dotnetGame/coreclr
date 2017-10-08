@@ -531,7 +531,7 @@ void MscorlibBinder::Check()
                 continue;
 
             // hidden size of the type that participates in the alignment calculation
-            DWORD hiddenSize = pMT->IsValueType() ? sizeof(MethodTable*) : 0;
+            DWORD hiddenSize = pMT->IsValueType() ? sizeof(Object) : 0;
 
             DWORD size = pMT->GetBaseSize() - (sizeof(ObjHeader)+hiddenSize);
 

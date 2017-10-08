@@ -12686,17 +12686,17 @@ void ComputeGCRefMap(MethodTable * pMT, BYTE * pGCRefMap, size_t cbGCRefMap)
     {
         // offset to embedded references in this series must be
         // adjusted by the VTable pointer, when in the unboxed state.
-        size_t offset = cur->GetSeriesOffset() - sizeof(void*);
+        size_t offset = cur->GetSeriesOffset() - sizeof(Object);
         size_t offsetStop = offset + cur->GetSeriesSize() + size;
         while (offset < offsetStop)
         {
-            size_t bit = offset / sizeof(void *);
+            size_t bit = offset / sizeof(void*);
 
             size_t index = bit / 8;
             _ASSERTE(index < cbGCRefMap);
             pGCRefMap[index] |= (1 << (bit & 7));
 
-            offset += sizeof(void *);
+            offset += sizeof(void*);
         }
         cur--;
     } while (cur >= last);

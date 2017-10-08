@@ -164,7 +164,7 @@ struct segment_info
 
 // The minimum size of an object is three pointers wide: one for the syncblock,
 // one for the object header, and one for the first field in the object.
-#define min_obj_size ((sizeof(uint8_t*) + sizeof(uintptr_t) + sizeof(size_t)))
+#define min_obj_size ((sizeof(uint8_t*) + sizeof(uintptr_t) + 2*sizeof(size_t)))
 
 // The bit shift used to convert a memory address into an index into the
 // Software Write Watch table.

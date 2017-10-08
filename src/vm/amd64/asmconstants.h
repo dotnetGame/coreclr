@@ -197,10 +197,10 @@ ASMCONSTANT_OFFSETOF_ASSERT(SyncTableEntry, m_SyncBlock);
 #define           OFFSETOF__SyncBlock__m_Monitor            0x0
 ASMCONSTANT_OFFSETOF_ASSERT(SyncBlock, m_Monitor);
 
-#define           OFFSETOF__DelegateObject___methodPtr      0x18
+#define           OFFSETOF__DelegateObject___methodPtr      0x20
 ASMCONSTANT_OFFSETOF_ASSERT(DelegateObject, _methodPtr);
 
-#define           OFFSETOF__DelegateObject___target         0x08
+#define           OFFSETOF__DelegateObject___target         0x10
 ASMCONSTANT_OFFSETOF_ASSERT(DelegateObject, _target);
 
 #define               OFFSETOF__AwareLock__m_MonitorHeld        0x0
@@ -548,11 +548,11 @@ ASMCONSTANTS_C_ASSERT(SIZEOF__FaultingExceptionFrame
 ASMCONSTANTS_C_ASSERT(OFFSETOF__FaultingExceptionFrame__m_fFilterExecuted 
                     == offsetof(FaultingExceptionFrame, m_fFilterExecuted));
 
-#define               OFFSETOF__PtrArray__m_NumComponents 0x8
+#define               OFFSETOF__PtrArray__m_NumComponents 0x10
 ASMCONSTANTS_C_ASSERT(OFFSETOF__PtrArray__m_NumComponents
                     == offsetof(PtrArray, m_NumComponents));
 
-#define               OFFSETOF__PtrArray__m_Array 0x10
+#define               OFFSETOF__PtrArray__m_Array 0x18
 ASMCONSTANTS_C_ASSERT(OFFSETOF__PtrArray__m_Array
                     == offsetof(PtrArray, m_Array));
 
@@ -601,11 +601,11 @@ ASMCONSTANTS_RUNTIME_ASSERT(DELEGATE_FIELD_OFFSET__METHOD_AUX == Object::GetOffs
 #define ASM_LARGE_OBJECT_SIZE 85000
 ASMCONSTANTS_C_ASSERT(ASM_LARGE_OBJECT_SIZE == LARGE_OBJECT_SIZE);
 
-#define               OFFSETOF__ArrayBase__m_NumComponents 8
+#define               OFFSETOF__ArrayBase__m_NumComponents 0x10
 ASMCONSTANTS_C_ASSERT(OFFSETOF__ArrayBase__m_NumComponents
                     == offsetof(ArrayBase, m_NumComponents));
 
-#define               OFFSETOF__StringObject__m_StringLength 0x8
+#define               OFFSETOF__StringObject__m_StringLength 0x10
 ASMCONSTANTS_C_ASSERT(OFFSETOF__StringObject__m_StringLength
                     == offsetof(StringObject, m_StringLength));
 

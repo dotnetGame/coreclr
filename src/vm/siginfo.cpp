@@ -5005,7 +5005,7 @@ void ReportPointersFromValueType(promote_func *fn, ScanContext *sc, PTR_MethodTa
     {
         // offset to embedded references in this series must be
         // adjusted by the VTable pointer, when in the unboxed state.
-        size_t offset = cur->GetSeriesOffset() - sizeof(void*);
+        size_t offset = cur->GetSeriesOffset() - sizeof(Object);
         PTR_OBJECTREF srcPtr = dac_cast<PTR_OBJECTREF>(PTR_BYTE(pSrc) + offset);
         PTR_OBJECTREF srcPtrStop = dac_cast<PTR_OBJECTREF>(PTR_BYTE(srcPtr) + cur->GetSeriesSize() + size);         
         while (srcPtr < srcPtrStop)                                         

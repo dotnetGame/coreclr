@@ -1576,7 +1576,7 @@ namespace System.Reflection
                         const int CustomAttributeVersion = 0x0001;
 #endif
                         if (Marshal.ReadInt16(blobStart) != CustomAttributeVersion)
-                            throw new CustomAttributeFormatException();
+                            throw new CustomAttributeFormatException("Marshal.ReadInt16(blobStart) != CustomAttributeVersion");
                         blobStart = (IntPtr)((byte*)blobStart + 2); // skip version prefix
 
                         cNamedArgs = Marshal.ReadInt16(blobStart);
@@ -1653,7 +1653,7 @@ namespace System.Reflection
                 }
 
                 if (!blobStart.Equals(blobEnd))
-                    throw new CustomAttributeFormatException();
+                    throw new CustomAttributeFormatException("!blobStart.Equals(blobEnd)");
 
                 attributes[cAttributes++] = attribute;
             }

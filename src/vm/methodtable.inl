@@ -244,7 +244,6 @@ inline DWORD MethodTable::GetNumInstanceFieldBytes()
 inline WORD MethodTable::GetNumIntroducedInstanceFields()
 {
     LIMITED_METHOD_DAC_CONTRACT;
-
     WORD wNumFields = GetNumInstanceFields();
 
     MethodTable * pParentMT = GetParentMethodTable();
