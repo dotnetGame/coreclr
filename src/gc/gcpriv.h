@@ -4021,7 +4021,7 @@ size_t generation_unusable_fragmentation (generation* inst)
 #define min_free_list       (2*min_obj_size)
 struct plug
 {
-    uint8_t *  skew[plug_skew / sizeof(uint8_t *)];
+    uint8_t *  skew[plug_skew / sizeof(uint8_t *)+1];
 };
 
 class pair
@@ -4064,6 +4064,7 @@ struct gap_reloc_pair
     size_t gap;
     size_t   reloc;
     pair        m_pair;
+    void* unity_padding;
 };
 
 #define min_pre_pin_obj_size (sizeof (gap_reloc_pair) + min_obj_size)

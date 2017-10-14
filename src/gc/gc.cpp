@@ -4067,7 +4067,7 @@ public:
 
 #define header(i) ((CObjectHeader*)(i))
 
-#define free_list_slot(x) ((uint8_t**)(x))[2]
+#define free_list_slot(x) ((uint8_t**)(x))[3]
 #define free_list_undo(x) ((uint8_t**)(x))[-1]
 #define UNDO_EMPTY ((uint8_t*)1)
 
