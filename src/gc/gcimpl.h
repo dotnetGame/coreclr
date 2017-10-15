@@ -7,7 +7,7 @@
 #define GCIMPL_H_
 
 #ifdef SERVER_GC
-#define MULTIPLE_HEAPS 1
+#define MULTIPLE_HEAPS 0
 #endif  // SERVER_GC
 
 #ifdef MULTIPLE_HEAPS

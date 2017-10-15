@@ -4021,6 +4021,7 @@ public:
 
     void UnsetFree()
     {
+        assert(!"Not implemented.");
         size_t size = free_object_base_size - plug_skew;
 
         // since we only need to clear 2 ptr size, we do it manually
@@ -5938,7 +5939,7 @@ void repair_allocation (gc_alloc_context* acontext, void*)
     {
         dprintf (3, ("Clearing [%Ix, %Ix[", (size_t)acontext->alloc_ptr,
                      (size_t)acontext->alloc_limit+Align(min_obj_size)));
-        memclr (acontext->alloc_ptr - plug_skew,
+        memclr (acontext->alloc_ptr,
                 (acontext->alloc_limit - acontext->alloc_ptr)+Align (min_obj_size));
     }
 }
@@ -10499,7 +10500,7 @@ gc_heap::init_gc_heap (int  h_number)
 
     heap_segment_allocated (seg) = start;
     alloc_allocated = start;
-    heap_segment_used (seg) = start - plug_skew;
+    heap_segment_used (seg) = start;
 
     ephemeral_heap_segment = seg;
 
@@ -24454,7 +24455,7 @@ void  gc_heap::gcmemcopy (uint8_t* dest, uint8_t* src, size_t len, BOOL copy_car
 #endif //BACKGROUND_GC
         //dprintf(3,(" Memcopy [%Ix->%Ix, %Ix->%Ix[", (size_t)src, (size_t)dest, (size_t)src+len, (size_t)dest+len));
         dprintf(3,(" mc: [%Ix->%Ix, %Ix->%Ix[", (size_t)src, (size_t)dest, (size_t)src+len, (size_t)dest+len));
-        memcopy (dest - plug_skew, src - plug_skew, len);
+        memcopy (dest, src, len);
 #ifdef FEATURE_USE_SOFTWARE_WRITE_WATCH_FOR_GC_HEAP
         if (SoftwareWriteWatch::IsEnabledForGCHeap())
         {
