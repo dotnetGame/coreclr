@@ -11419,14 +11419,14 @@ void gc_heap::adjust_limit_clr (uint8_t* start, size_t limit_size,
     {
         //Sometimes the allocated size is advanced without clearing the
         //memory. Let's catch up here
-        if (heap_segment_used (seg) < (alloc_allocated - plug_skew))
+        if (heap_segment_used (seg) < (alloc_allocated))
         {
 #ifdef MARK_ARRAY
 #ifndef BACKGROUND_GC
             clear_mark_array (heap_segment_used (seg) + plug_skew, alloc_allocated);
 #endif //BACKGROUND_GC
 #endif //MARK_ARRAY
-            heap_segment_used (seg) = alloc_allocated - plug_skew;
+            heap_segment_used (seg) = alloc_allocated;
         }
     }
 #ifdef BACKGROUND_GC
@@ -11441,13 +11441,13 @@ void gc_heap::adjust_limit_clr (uint8_t* start, size_t limit_size,
     }
 #endif //BACKGROUND_GC
     if ((seg == 0) ||
-        (start - plug_skew + limit_size) <= heap_segment_used (seg))
+        (start + limit_size) <= heap_segment_used (seg))
     {
         dprintf (SPINLOCK_LOG, ("[%d]Lmsl to clear memory(1)", heap_number));
         add_saved_spinlock_info (me_release, mt_clr_mem);
         leave_spin_lock (&more_space_lock);
-        dprintf (3, ("clearing memory at %Ix for %d bytes", (start - plug_skew), limit_size));
-        memclr (start - plug_skew, limit_size);
+        dprintf (3, ("clearing memory at %Ix for %d bytes", (start), limit_size));
+        memclr (start, limit_size);
     }
     else
     {
