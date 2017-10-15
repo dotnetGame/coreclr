@@ -10533,7 +10533,7 @@ gc_heap::init_gc_heap (int  h_number)
     generation_table [max_generation+1].gen_num = max_generation+1;
     make_generation (generation_table [max_generation+1],lseg, heap_segment_mem (lseg), 0);
     heap_segment_allocated (lseg) = heap_segment_mem (lseg) + Align (min_obj_size, get_alignment_constant (FALSE));
-    heap_segment_used (lseg) = heap_segment_allocated (lseg) - plug_skew;
+    heap_segment_used (lseg) = heap_segment_allocated (lseg);
 
     for (int gen_num = 0; gen_num <= 1 + max_generation; gen_num++)
     {
@@ -11432,7 +11432,7 @@ void gc_heap::adjust_limit_clr (uint8_t* start, size_t limit_size,
 #ifdef BACKGROUND_GC
     else if (seg)
     {
-        uint8_t* old_allocated = heap_segment_allocated (seg) - plug_skew - limit_size;
+        uint8_t* old_allocated = heap_segment_allocated (seg) - limit_size;
 #ifdef FEATURE_LOH_COMPACTION
         old_allocated -= Align (loh_padding_obj_size, align_const);
 #endif //FEATURE_LOH_COMPACTION
@@ -11452,12 +11452,12 @@ void gc_heap::adjust_limit_clr (uint8_t* start, size_t limit_size,
     else
     {
         uint8_t* used = heap_segment_used (seg);
-        heap_segment_used (seg) = start + limit_size - plug_skew;
+        heap_segment_used (seg) = start + limit_size;
 
         dprintf (SPINLOCK_LOG, ("[%d]Lmsl to clear memory", heap_number));
         add_saved_spinlock_info (me_release, mt_clr_mem);
         leave_spin_lock (&more_space_lock);
-        if ((start - plug_skew) < used)
+        if ((start) < used)
         {
             if (used != saved_used)
             {
@@ -11465,8 +11465,8 @@ void gc_heap::adjust_limit_clr (uint8_t* start, size_t limit_size,
             }
 
             dprintf (2, ("clearing memory before used at %Ix for %Id bytes", 
-                (start - plug_skew), (plug_skew + used - start)));
-            memclr (start - plug_skew, used - (start - plug_skew));
+                (start), (used - start)));
+            memclr (start, used - (start));
         }
     }
 
