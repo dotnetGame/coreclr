@@ -125,8 +125,8 @@ inline void FATAL_GC_ERROR()
 
 //#define STRESS_PINNING    //Stress pinning by pinning randomly
 
-//#define TRACE_GC          //debug trace gc operation
-//#define SIMPLE_DPRINTF
+#define TRACE_GC          //debug trace gc operation
+#define SIMPLE_DPRINTF
 
 //#define TIME_GC           //time allocation and garbage collection
 //#define TIME_WRITE_WATCH  //time GetWriteWatch and ResetWriteWatch calls
@@ -250,12 +250,13 @@ const int policy_expand  = 2;
 
 //#define dprintf(l,x) {if (trace_gc && ((l<=print_level)||gc_heap::settings.concurrent)) {printf ("\n");printf x ; fflush(stdout);}}
 void GCLog (const char *fmt, ... );
+#define dprintf(l,x) {GCLog x;}
 //#define dprintf(l,x) {if (trace_gc && (l<=print_level)) {GCLog x;}}
 //#define dprintf(l,x) {if ((l==SEG_REUSE_LOG_0) || (l==SEG_REUSE_LOG_1) || (trace_gc && (l<=3))) {GCLog x;}}
 //#define dprintf(l,x) {if (l == DT_LOG_0) {GCLog x;}}
 //#define dprintf(l,x) {if (trace_gc && ((l <= 2) || (l == BGC_LOG) || (l==GTC_LOG))) {GCLog x;}}
 //#define dprintf(l,x) {if ((l == 1) || (l == 2222)) {GCLog x;}}
-#define dprintf(l,x) {if ((l <= 1) || (l == GTC_LOG)) {GCLog x;}}
+//#define dprintf(l,x) {if ((l <= 1) || (l == GTC_LOG)) {GCLog x;}}
 //#define dprintf(l,x) {if ((l==GTC_LOG) || (l <= 1)) {GCLog x;}}
 //#define dprintf(l,x) {if (trace_gc && ((l <= print_level) || (l==GTC_LOG))) {GCLog x;}}
 //#define dprintf(l,x) {if (l==GTC_LOG) {printf ("\n");printf x ; fflush(stdout);}}
@@ -4015,14 +4016,14 @@ size_t generation_unusable_fragmentation (generation* inst)
                     (1.0f-generation_allocator_efficiency(inst))*generation_free_list_space (inst));
 }
 
-#define plug_skew           sizeof(ObjHeader)
+//#define plug_skew           sizeof(ObjHeader)
 // We always use USE_PADDING_TAIL when fitting so items on the free list should be
 // twice the min_obj_size.
 #define min_free_list       (2*min_obj_size)
-struct plug
-{
-    uint8_t *  skew[plug_skew / sizeof(uint8_t *)];
-};
+//struct plug
+//{
+//    uint8_t *  skew[plug_skew / sizeof(uint8_t *)];
+//};
 
 class pair
 {
@@ -4037,14 +4038,12 @@ public:
 struct plug_and_pair
 {
     pair        m_pair;
-    plug        m_plug;
 };
 
 struct plug_and_reloc
 {
     ptrdiff_t   reloc;
     pair        m_pair;
-    plug        m_plug;
 };
 
 struct plug_and_gap
@@ -4056,7 +4055,6 @@ struct plug_and_gap
         pair    m_pair;
         int     lr;  //for clearing the entire pair in one instruction
     };
-    plug        m_plug;
 };
 
 struct gap_reloc_pair
@@ -4076,7 +4074,7 @@ struct DECLSPEC_ALIGN(8) aligned_plug_and_gap
 struct loh_obj_and_pad
 {
     ptrdiff_t   reloc;    
-    plug        m_plug;
+    //plug        m_plug;
 };
 
 struct loh_padding_obj
@@ -4084,7 +4082,7 @@ struct loh_padding_obj
     uint8_t*    mt;
     size_t      len;
     ptrdiff_t   reloc;
-    plug        m_plug;
+    //plug        m_plug;
 };
 #define loh_padding_obj_size (sizeof(loh_padding_obj))
 

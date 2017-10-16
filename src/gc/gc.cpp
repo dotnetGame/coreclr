@@ -478,7 +478,7 @@ size_t max_gc_buffers = 0;
 static CLRCriticalSection gc_log_lock;
 
 // we keep this much in a buffer and only flush when the buffer is full
-#define gc_log_buffer_size (1024*1024)
+#define gc_log_buffer_size (1*1024)
 uint8_t* gc_log_buffer = 0;
 size_t gc_log_buffer_offset = 0;
 
@@ -4022,7 +4022,7 @@ public:
     void UnsetFree()
     {
         assert(!"Not implemented.");
-        size_t size = free_object_base_size - plug_skew;
+        size_t size = free_object_base_size - sizeof(ObjHeader);
 
         // since we only need to clear 2 ptr size, we do it manually
         PTR_PTR m = (PTR_PTR) this;
@@ -4068,7 +4068,7 @@ public:
 
 #define header(i) ((CObjectHeader*)(i))
 
-#define free_list_slot(x) ((uint8_t**)(x))[2]
+#define free_list_slot(x) ((uint8_t**)(x))[3]
 #define free_list_undo(x) ((uint8_t**)(x))[-1]
 #define UNDO_EMPTY ((uint8_t*)1)
 
@@ -11915,11 +11915,11 @@ void gc_heap::bgc_loh_alloc_clr (uint8_t* alloc_start,
 
     // clear memory while not holding the lock. 
     size_t size_to_skip = size_of_array_base;
-    size_t size_to_clear = size - size_to_skip - plug_skew;
+    size_t size_to_clear = size - size_to_skip;
     size_t saved_size_to_clear = size_to_clear;
     if (check_used_p)
     {
-        uint8_t* end = alloc_start + size - plug_skew;
+        uint8_t* end = alloc_start + size;
         uint8_t* used = heap_segment_used (seg);
         if (used < end)
         {
@@ -16369,7 +16369,7 @@ BOOL gc_heap::expand_soh_with_minimal_gc()
             generation_plan_allocation_start_size (gen) = gen_start_size;
             start += gen_start_size;
         }
-        heap_segment_used (ephemeral_heap_segment) = start - plug_skew;
+        heap_segment_used (ephemeral_heap_segment) = start;
         heap_segment_plan_allocated (ephemeral_heap_segment) = start;
 
         fix_generation_bounds (condemned_gen_number, generation_of (0));
@@ -17423,7 +17423,7 @@ uint8_t* gc_heap::next_end (heap_segment* seg, uint8_t* f)
             ptrdiff_t cs = mt->RawGetComponentSize();                         \
             parm = (uint8_t**)((uint8_t*)parm + (((start) - (uint8_t*)parm)/cs)*cs); \
         }                                                                   \
-        while ((uint8_t*)parm < ((o)+(size)-plug_skew))                     \
+        while ((uint8_t*)parm < ((o)+(size)))                               \
         {                                                                   \
             for (ptrdiff_t __i = 0; __i > cnt; __i--)                         \
             {                                                               \
@@ -17541,7 +17541,7 @@ void gc_heap::enque_pinned_plug (uint8_t* plug,
 
                 go_through_object_nostart (method_table(last_object_in_last_plug), last_object_in_last_plug, last_obj_size, pval,
                     {
-                        size_t gap_offset = (((size_t)pval - (size_t)(plug - sizeof (gap_reloc_pair) - plug_skew))) / sizeof (uint8_t*);
+                        size_t gap_offset = (((size_t)pval - (size_t)(plug - sizeof (gap_reloc_pair)))) / sizeof (uint8_t*);
                         dprintf (3, ("member: %Ix->%Ix, %Id ptrs from beginning of gap", (uint8_t*)pval, *pval, gap_offset));
                         m.set_pre_short_bit (gap_offset);
                     }
@@ -17610,7 +17610,7 @@ void gc_heap::save_post_plug_info (uint8_t* last_pinned_plug, uint8_t* last_obje
             // take care of collectible assemblies here.
             go_through_object_nostart (method_table(last_object_in_last_plug), last_object_in_last_plug, last_obj_size, pval,
                 {
-                    size_t gap_offset = (((size_t)pval - (size_t)(post_plug - sizeof (gap_reloc_pair) - plug_skew))) / sizeof (uint8_t*);
+                    size_t gap_offset = (((size_t)pval - (size_t)(post_plug - sizeof (gap_reloc_pair)))) / sizeof (uint8_t*);
                     dprintf (3, ("member: %Ix->%Ix, %Id ptrs from beginning of gap", (uint8_t*)pval, *pval, gap_offset));
                     m.set_post_short_bit (gap_offset);
                 }
@@ -21069,9 +21069,9 @@ void gc_heap::compact_loh()
                     // We grew the segment to accommondate allocations.
                     if (heap_segment_plan_allocated (seg) > heap_segment_allocated (seg))
                     {
-                        if ((heap_segment_plan_allocated (seg) - plug_skew)  > heap_segment_used (seg))
+                        if ((heap_segment_plan_allocated (seg))  > heap_segment_used (seg))
                         {
-                            heap_segment_used (seg) = heap_segment_plan_allocated (seg) - plug_skew;
+                            heap_segment_used (seg) = heap_segment_plan_allocated (seg);
                         }
                     }
 
@@ -30692,10 +30692,10 @@ void reset_memory (uint8_t* o, size_t sizeo)
     if (sizeo > 128 * 1024)
     {
         // We cannot reset the memory for the useful part of a free object.
-        size_t size_to_skip = min_free_list - plug_skew;
+        size_t size_to_skip = min_free_list;
 
         size_t page_start = align_on_page ((size_t)(o + size_to_skip));
-        size_t size = align_lower_page ((size_t)o + sizeo - size_to_skip - plug_skew) - page_start;
+        size_t size = align_lower_page ((size_t)o + sizeo - size_to_skip) - page_start;
         // Note we need to compensate for an OS bug here. This bug would cause the MEM_RESET to fail
         // on write watched memory.
         if (reset_mm_p)
@@ -30879,7 +30879,7 @@ void gc_heap::generation_delete_heap_segment (generation* gen,
     decommit_heap_segment (seg);
     seg->flags |= heap_segment_flags_decommitted;
 
-    set_mem_verify (heap_segment_allocated (seg) - plug_skew, heap_segment_used (seg), 0xbb);
+    set_mem_verify (heap_segment_allocated (seg), heap_segment_used (seg), 0xbb);
 }
 
 void gc_heap::process_background_segment_end (heap_segment* seg, 
@@ -30945,7 +30945,7 @@ void gc_heap::process_background_segment_end (heap_segment* seg,
         {
             dprintf (3, ("Trimming seg to %Ix[", (size_t)last_plug_end));
             heap_segment_allocated (seg) = last_plug_end;
-            set_mem_verify (heap_segment_allocated (seg) - plug_skew, heap_segment_used (seg), 0xbb);
+            set_mem_verify (heap_segment_allocated (seg), heap_segment_used (seg), 0xbb);
 
             decommit_heap_segment_pages (seg, 0);
         }
@@ -32915,14 +32915,14 @@ gc_heap::verify_heap (BOOL begin_gc_p)
             {
                 if (seg1)
                 {
-                    uint8_t* clear_start = heap_segment_allocated (seg1) - plug_skew;
+                    uint8_t* clear_start = heap_segment_allocated (seg1);
                     if (heap_segment_used (seg1) > clear_start)
                     {
                         dprintf (3, ("setting end of seg %Ix: [%Ix-[%Ix to 0xaa", 
                                     heap_segment_mem (seg1),
                                     clear_start ,
                                     heap_segment_used (seg1)));
-                        memset (heap_segment_allocated (seg1) - plug_skew, 0xaa,
+                        memset (heap_segment_allocated (seg1), 0xaa,
                             (heap_segment_used (seg1) - clear_start));
                     }
                     seg1 = heap_segment_next_rw (seg1);
