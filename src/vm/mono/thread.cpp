@@ -25,7 +25,7 @@ MonoThread * mono_thread_attach(MonoDomain *domain)
 
 void mono_thread_detach(MonoThread *thread)
 {
-    GetThread()->DetachThread(TRUE);
+    DestroyThread(thread);
 }
 
 void mono_thread_exiting()
