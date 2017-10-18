@@ -18,8 +18,17 @@ void mono_thread_set_main(MonoThread *thread)
     s_mainThread = thread;
 }
 
-
 MonoThread * mono_thread_attach(MonoDomain *domain)
 {
     return SetupThreadNoThrow();
+}
+
+void mono_thread_detach(MonoThread *thread)
+{
+    GetThread()->DetachThread(TRUE);
+}
+
+void mono_thread_exiting()
+{
+    assert(!"mono_thread_exit");
 }

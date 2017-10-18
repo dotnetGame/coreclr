@@ -602,7 +602,9 @@ gboolean mono_assembly_name_parse(const char *name, MonoAssemblyName *aname)
             ReleaseHolder<ICLRPrivAssembly> assemblyPriv;
             bindResult.GetBindAssembly(&assemblyPriv);
             auto assemblyName = BINDER_SPACE::GetAssemblyFromPrivAssemblyFast(assemblyPriv)->GetAssemblyName();
-            aname->name = assemblyName->GetSimpleName().GetUTF8NoConvert();
+            SString utf8Name;
+            assemblyName->GetSimpleName().ConvertToUTF8(utf8Name);
+            aname->name = _strdup(utf8Name.GetUTF8NoConvert());
             aname->public_key = assemblyName->GetPublicKeyTokenBLOB();
 
             found = true;
@@ -617,4 +619,46 @@ gboolean mono_assembly_name_parse(const char *name, MonoAssemblyName *aname)
     }
     EX_END_CATCH(SwallowAllExceptions);
     return found;
+}
+
+MonoDomain* mono_get_root_domain(void)
+{
+    return GetAppDomain();
+}
+
+void mono_unity_jit_cleanup(MonoDomain *domain)
+{
+    ICLRRuntimeHost4 *host = s_hostEnvironment->GetCLRRuntimeHost();
+    host->UnloadAppDomain(domain->GetId().m_dwId, TRUE);
+}
+
+MonoAssembly* mono_assembly_loaded(MonoAssemblyName *aname)
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+    }
+    CONTRACTL_END;
+
+    MonoAssembly* assembly = nullptr;
+    EX_TRY
+    {
+        AssemblySpec spec;
+        spec.SetName(aname->name);
+        auto peAssembly = GetAppDomain()->BindAssemblySpec(&spec, TRUE, TRUE);
+        if (peAssembly)
+        {
+            assembly = GetAppDomain()->LoadAssembly(&spec, peAssembly, FILE_LOADED);
+        }
+    }
+    EX_CATCH
+    {
+#if _DEBUG
+        logger << "Load failed: " << aname->name << std::endl;
+#endif
+    }
+    EX_END_CATCH(SwallowAllExceptions);
+    return assembly;
 }

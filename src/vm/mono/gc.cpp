@@ -52,10 +52,28 @@ guint32 mono_gchandle_new(MonoObject *obj, gboolean pinned)
         auto store = mgr->GetGlobalHandleStore();
         GCX_COOP();
         handle = store->CreateHandleOfType(obj, pinned ? HNDTYPE_PINNED : HNDTYPE_DEFAULT);
-
     }
     EX_CATCH
     EX_END_CATCH(SwallowAllExceptions);
     _ASSERT(reinterpret_cast<uintptr_t>(handle) <= std::numeric_limits<guint32>().max());
     return reinterpret_cast<guint32>(handle);
+}
+
+void mono_gchandle_free(guint32 gchandle)
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+    }
+    CONTRACTL_END;
+
+    EX_TRY
+    {
+        GCX_COOP();
+        DestroyTypedHandle(reinterpret_cast<OBJECTHANDLE>(gchandle));
+    }
+    EX_CATCH
+    EX_END_CATCH(SwallowAllExceptions);
 }
